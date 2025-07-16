@@ -42,16 +42,30 @@ class BugTracker:
         self.wb.save(self.filename)
         return index
     
-    def update_bug(self, index, date, bug, description, solution, person, files, status):
+    def update_bug(self, index, **kwargs):
+        """Update specific fields of a bug without resetting others.
+        
+        Args:
+            index: The bug index to update
+            kwargs: Any of date, bug, description, solution, 
+                   person, files, status to update
+        """
+        column_map = {
+            'date': 2,
+            'bug': 3,
+            'description': 4,
+            'solution': 5,
+            'person': 6,
+            'files': 7,
+            'status': 8
+        }
+        
         for row in self.ws.iter_rows(min_row=2):
             if row[0].value == index:
-                row[1].value = date
-                row[2].value = bug
-                row[3].value = description
-                row[4].value = solution
-                row[5].value = person
-                row[6].value = files
-                row[7].value = status
+                for field, value in kwargs.items():
+                    if field in column_map:
+                        col = column_map[field]
+                        row[col-1].value = value if value != '' else row[col-1].value
                 break
         self.wb.save(self.filename)
     
@@ -140,11 +154,19 @@ def main():
                 
             elif command.startswith("update_bug,"):
                 parts = command.split(",")
-                if len(parts) != 9:
-                    print("Error: update_bug requires 8 parameters")
+                if len(parts) < 2:
+                    print("Error: update_bug requires at least index")
                     continue
-                _, index, date, bug, description, solution, person, files, status = parts
-                tracker.update_bug(int(index), date, bug, description, solution, person, files, status)
+                index = int(parts[1])
+                updates = {}
+                if len(parts) > 2: updates['date'] = parts[2]
+                if len(parts) > 3: updates['bug'] = parts[3]
+                if len(parts) > 4: updates['description'] = parts[4]
+                if len(parts) > 5: updates['solution'] = parts[5]
+                if len(parts) > 6: updates['person'] = parts[6]
+                if len(parts) > 7: updates['files'] = parts[7]
+                if len(parts) > 8: updates['status'] = parts[8]
+                tracker.update_bug(index, **updates)
                 print(f"Updated bug {index}")
                 
             elif command.startswith("solved_bug,"):
