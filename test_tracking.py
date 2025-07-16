@@ -43,16 +43,30 @@ class TestCaseTracker:
         self.wb.save(self.filename)
         return index
     
-    def update_test_case(self, index, objective, date, person, expectation, results, remark, status):
+    def update_test_case(self, index, **kwargs):
+        """Update specific fields of a test case without resetting others.
+        
+        Args:
+            index: The test case index to update
+            kwargs: Any of objective, date, person, expectation,
+                   results, remark, status to update
+        """
+        column_map = {
+            'objective': 2,
+            'date': 3,
+            'person': 4,
+            'expectation': 5,
+            'results': 6,
+            'remark': 7,
+            'status': 8
+        }
+        
         for row in self.ws.iter_rows(min_row=2):
             if row[0].value == index:
-                row[1].value = objective
-                row[2].value = date
-                row[3].value = person
-                row[4].value = expectation
-                row[5].value = results
-                row[6].value = remark
-                row[7].value = status
+                for field, value in kwargs.items():
+                    if field in column_map:
+                        col = column_map[field]
+                        row[col-1].value = value if value != '' else row[col-1].value
                 break
         self.wb.save(self.filename)
     
@@ -140,11 +154,21 @@ def main():
                 
             elif command.startswith("update,"):
                 parts = command.split(",")
-                if len(parts) != 9:
-                    print("Error: update requires 8 parameters")
+                if len(parts) < 2:
+                    print("Error: update requires at least index")
                     continue
-                _, index, objective, date, person, expectation, results, remark, status = parts
-                tracker.update_test_case(int(index), objective, date, person, expectation, results, remark, status)
+                
+                index = int(parts[1])
+                updates = {}
+                if len(parts) > 2: updates['objective'] = parts[2]
+                if len(parts) > 3: updates['date'] = parts[3]
+                if len(parts) > 4: updates['person'] = parts[4]
+                if len(parts) > 5: updates['expectation'] = parts[5]
+                if len(parts) > 6: updates['results'] = parts[6]
+                if len(parts) > 7: updates['remark'] = parts[7]
+                if len(parts) > 8: updates['status'] = parts[8]
+                
+                tracker.update_test_case(index, **updates)
                 print(f"Updated test case {index}")
                 
             elif command.startswith("complete,"):
