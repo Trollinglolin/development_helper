@@ -1,11 +1,11 @@
 # Development Helper
 
-***Description***
+## Description
 
 Help bug tracking and test tracking for developing a project
 
 
-***How to Run this Program***
+## How to Run this Program
 
 Install Packages
 ```bash
